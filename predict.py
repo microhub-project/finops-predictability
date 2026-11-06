@@ -1,21 +1,4 @@
 import json, datetime
-import pandas as pd
-
-def filter_days(original_file, final_file):
-    df = pd.read_csv(original_file, delimiter=';')
-
-    new_df = df[df['infra_multiplier'] > 1.29]
-
-    new_df.to_csv(final_file, sep=';', index=False)
-    
-def group_months():
-    df = pd.read_csv('yearly-data.csv', delimiter=';')
-
-    monthly_summary = round((df.groupby('month', as_index=False)[
-        'infra_multiplier'
-    ].max()), 2)
-
-    monthly_summary.to_csv('monthly-data.csv', sep=';', index=False)
     
 def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
     
@@ -56,9 +39,9 @@ def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
 
     increase_percentage = (monthly_cost_increase * 100) / monthly_cost
 
-    #print(f'Tipo de Escalabilidade: {scale_type}')
-    #print(f'Instância selecionada: {cheapest_option}')
-    #print(f'Antes o custo era de ${round(monthly_cost, 2)}, agora o custo total será de ${round(final_cost, 2)}. Representando um aumento de ${round(monthly_cost_increase, 2)} ({round(increase_percentage, 2)}%).')
+    print(f'Tipo de Escalabilidade: {scale_type}')
+    print(f'Instância selecionada: {cheapest_option}')
+    print(f'Antes o custo era de ${round(monthly_cost, 2)}, agora o custo total será de ${round(final_cost, 2)}. Representando um aumento de ${round(monthly_cost_increase, 2)} ({round(increase_percentage, 2)}%).')
     
     result = {
         'scale_type': scale_type,
@@ -69,37 +52,47 @@ def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
         'new_instance': cheapest_option
     }
     
-    return result
+    #json_data = json.dumps(result, indent=2)
     
-    # json_data = json.dumps(result, indent=2)
+    print(result)
+    
+    return result
     
     #file_name = f'{scale_type}.json'
 
     #with open(file_name, 'w') as json_file:
     #    json_file.write(json_data)
-    
-suggest_scale(2, 4, 18.83, 1.84, 'vertical')
-suggest_scale(2, 4, 18.83, 1.84, 'horizontal')
 
-def predict_year(infra_multiplier):
-    predictions = {}
+def predict_year(mac, cpu, ram, monthly_cost, infra_multiplier):
+    predictions = {
+        'mac_address': mac
+    }
     
     for i in range(12):
-        vertical = suggest_scale(2, 4, 18.83, infra_multiplier[i], 'vertical')
-        horizontal = suggest_scale(2, 4, 18.83, infra_multiplier[i], 'horizontal')
-        
+        vertical = suggest_scale(cpu, ram, monthly_cost, infra_multiplier[i], 'vertical')
+        horizontal = suggest_scale(cpu, ram, monthly_cost, infra_multiplier[i], 'horizontal')
+    
         predictions[f'{i + 1}'] = {
             'infra_multiplier': infra_multiplier[i],
             'vertical': vertical,
             'horizontal': horizontal,
         }
         
-    year = datetime.datetime.now().strftime('%Y')
-    file_name = f'predictions_{year}.json'
+    #year = datetime.datetime.now().strftime('%Y')
+    #file_name = f'{mac}_predictions_{year}.json'
     
-    json_data = json.dumps(predictions, indent=2)
+    #json_data = json.dumps(predictions, indent=2)
     
-    with open(file_name, 'w') as json_file:
-        json_file.write(json_data)
-        
-predict_year([1.23, 1.45, 1.8, 1.47, 2.07, 1.9, 2.06, 1.67, 1.66, 1.77, 6.65, 2.57])
+    print(predictions)
+    
+    return predictions
+    
+    #with open(file_name, 'w') as json_file:
+    #    json_file.write(json_data)
+
+# https://economia.uol.com.br/noticias/redacao/2026/10/02/datas-duplas-ganham-forca-e-turbinam-vendas-de-grandes-marketplaces.htm
+# https://www.ecommercebrasil.com.br/noticias/vendas-online-crescem-quase-40-na-semana-do-consumidor-aponta-levantamento-da-nuvemshop
+# https://www.infomoney.com.br/consumo/vendas-em-e-commerce-e-varejo-aumentam-18-durante-semana-do-consumidor-diz-pesquisa/
+# https://www.ecommercebrasil.com.br/noticias/vendas-aumentam-139-na-semana-do-cliente
+# https://bis2bis.com.br/blog/datas-comemorativas-do-e-commerce/
+# https://mundodomarketing.com.br/e-commerce-avanca-24-37-no-1-semestre-e-mira-r-260-bilhoes-em-2026
