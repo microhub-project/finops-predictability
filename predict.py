@@ -54,8 +54,6 @@ def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
     
     #json_data = json.dumps(result, indent=2)
     
-    print(result)
-    
     return result
     
     #file_name = f'{scale_type}.json'
@@ -64,31 +62,46 @@ def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
     #    json_file.write(json_data)
 
 def predict_year(mac, cpu, ram, monthly_cost, infra_multiplier):
-    predictions = {
-        'mac_address': mac
-    }
+    predictions = []
     
     for i in range(12):
         vertical = suggest_scale(cpu, ram, monthly_cost, infra_multiplier[i], 'vertical')
         horizontal = suggest_scale(cpu, ram, monthly_cost, infra_multiplier[i], 'horizontal')
     
-        predictions[f'{i + 1}'] = {
+        predictions.append({
+            'month': i + 1,
             'infra_multiplier': infra_multiplier[i],
             'vertical': vertical,
-            'horizontal': horizontal,
-        }
+            'horizontal': horizontal
+        })
         
     #year = datetime.datetime.now().strftime('%Y')
     #file_name = f'{mac}_predictions_{year}.json'
     
     #json_data = json.dumps(predictions, indent=2)
     
-    print(predictions)
-    
-    return predictions
+    return {
+        'mac_address': mac,
+        'predictions': predictions
+    }
     
     #with open(file_name, 'w') as json_file:
     #    json_file.write(json_data)
+    
+def predict_infra(instances, infra_multiplier):
+    predictions = []
+    
+    for instance in instances:
+        vertical = suggest_scale(instance.cpu, instance.ram, instance.monthly_cost, infra_multiplier, "vertical")
+        horizontal = suggest_scale(instance.cpu, instance.ram, instance.monthly_cost, infra_multiplier, "horizontal")
+        
+        predictions.append({
+            'mac': instance.mac,
+            'vertical': vertical,
+            'horizontal': horizontal
+        })
+    
+    return predictions
 
 # https://economia.uol.com.br/noticias/redacao/2026/10/02/datas-duplas-ganham-forca-e-turbinam-vendas-de-grandes-marketplaces.htm
 # https://www.ecommercebrasil.com.br/noticias/vendas-online-crescem-quase-40-na-semana-do-consumidor-aponta-levantamento-da-nuvemshop
