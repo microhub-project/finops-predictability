@@ -1,5 +1,5 @@
-import json
-import urllib.request
+from dotenv import load_dotenv
+import os, pymysql, json, urllib.request, uuid
 
 def get_ec2_prices(region='us-east-1'):
     url = f'https://ec2.shop/?region={region}&output=json'
@@ -21,10 +21,10 @@ def get_ec2_prices(region='us-east-1'):
             
             for item in prices_list:
                 instance_type = item.get('InstanceType')
-                memory = float(item.get('Memory').replace(' GiB', ''))
+                memory = round(float(item.get('Memory').replace(' GiB', '')), 2)
                 cpus = item.get('VCPUS')
                 price_per_hour = item.get('Cost')
-                monthly_cost = item.get('MonthlyPrice')
+                monthly_cost = round(item.get('MonthlyPrice'), 2)
                 
                 if instance_type and price_per_hour is not None:
                     try:
@@ -55,20 +55,54 @@ def save_to_json(data, filename):
 
 region_target = 'us-east-1'
 results = get_ec2_prices(region=region_target)
+print(f'Quantidade total de instâncias obtidas: {len(results)}')
 
-print(f'\n{'Instância':<15} | {'Memória':<11} | {'vCPU':<11} | {'USD/Hora':<10} | {'USD/Mês':<10}')
-print('-' * 67)
+# output_filename = f'ec2_prices_{region_target}.json'
+# save_to_json(results, output_filename)
 
-for item in results[:25]:
-    print(
-        f'{item['instance_type']:<15} | '
-        f'${item['memory']:<10.2f} | '
-        f'${item['cpus']:<10.2f} | '
-        f'${item['price_per_hour']:<9.4f} | '
-        f'${item['monthly_cost']:<14.2f}'
+load_dotenv()
+
+conexao = pymysql.connect(
+    host=os.getenv("host"),
+    user=os.getenv("user"),
+    password=os.getenv("password"),
+    database=os.getenv("database"),
+)
+
+cursor = conexao.cursor()
+
+for item in results:
+    instance_type = item['instance_type']
+    cpus = item['cpus']
+    memory = item['memory']
+    monthly_cost = item['monthly_cost']
+    
+    cursor.execute(
+        'SELECT nome, cpu, ram, custo_computacao FROM tipo WHERE nome = %s;',
+        (instance_type,)
     )
+    tipo = cursor.fetchone()
+    
+    if tipo is None:
+        tipoUUID = str(uuid.uuid4())
+        cursor.execute(
+            'INSERT INTO tipo (uuid, nome, cpu, ram, custo_computacao) VALUES (UUID_TO_BIN(%s), %s, %s, %s, %s);',
+            (tipoUUID, instance_type, cpus, memory, monthly_cost)
+        )
+        print(f'Tipo de instância {instance_type} inserido com sucesso: CPU = {cpus}, RAM = {memory}, CUSTO = R$ {monthly_cost}')
+    else:
+        if (
+            tipo[1] != cpus
+            or float(tipo[2]) != memory
+            or float(tipo[3]) != monthly_cost
+        ):
+            cursor.execute(
+                'UPDATE tipo SET cpu = %s, ram = %s, custo_computacao = %s, atualizado_em = CURRENT_TIMESTAMP() WHERE nome = %s;',
+                (cpus, memory, monthly_cost, instance_type)
+            )
+            print(f'Tipo de instância {instance_type} atualizado com sucesso: CPU ({tipo[1]} -> {cpus}), RAM ({tipo[2]} -> {memory}), CUSTO (R$ {tipo[3]} -> R$ {monthly_cost})')
 
-print(f'\nQuantidade total de instâncias obtidas: {len(results)}')
+conexao.commit()
 
-output_filename = f'ec2_prices_{region_target}.json'
-save_to_json(results, output_filename)
+cursor.close()
+conexao.close()
