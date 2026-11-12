@@ -39,9 +39,9 @@ def suggest_scale(cpu, ram, monthly_cost, infra_multiplier, scale_type):
 
     increase_percentage = (monthly_cost_increase * 100) / monthly_cost
 
-    print(f'Tipo de Escalabilidade: {scale_type}')
-    print(f'Instância selecionada: {cheapest_option}')
-    print(f'Antes o custo era de ${round(monthly_cost, 2)}, agora o custo total será de ${round(final_cost, 2)}. Representando um aumento de ${round(monthly_cost_increase, 2)} ({round(increase_percentage, 2)}%).')
+    #print(f'Tipo de Escalabilidade: {scale_type}')
+    #print(f'Instância selecionada: {cheapest_option}')
+    #print(f'Antes o custo era de ${round(monthly_cost, 2)}, agora o custo total será de ${round(final_cost, 2)}. Representando um aumento de ${round(monthly_cost_increase, 2)} ({round(increase_percentage, 2)}%).')
     
     result = {
         'scale_type': scale_type,
@@ -100,6 +100,18 @@ def predict_infra(instances, infra_multiplier):
             'vertical': vertical,
             'horizontal': horizontal
         })
+    
+    return predictions
+    
+def predict_year_infra(instances, infra_multiplier):
+    predictions = []
+    
+    for instance in instances:
+        prediction = predict_year(instance.mac, instance.cpu, instance.ram, instance.monthly_cost, infra_multiplier)
+        
+        predictions.append(
+            prediction
+        )
     
     return predictions
 

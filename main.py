@@ -2,8 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from predict import suggest_scale, predict_year, predict_infra
-
+from predict import suggest_scale, predict_year, predict_infra, predict_year_infra
 
 class Prediction(BaseModel):
     cpu: int
@@ -28,6 +27,10 @@ class Instance(BaseModel):
 class InfraPrediction(BaseModel):
     instances: list[Instance]
     infra_multiplier: float
+    
+class InfraYearPrediction(BaseModel):
+    instances: list[Instance]
+    infra_multiplier: list[float]
 
 app = FastAPI()
 
@@ -49,6 +52,10 @@ async def predict_year_endpoint(prediction: YearPrediction):
 @app.post("/predict-infra/")
 async def predict_infra_endpoint(prediction: InfraPrediction):
     return predict_infra(prediction.instances, prediction.infra_multiplier)
+
+@app.post("/predict-year-infra/")
+async def predict_year_infra_endpoint(prediction: InfraYearPrediction):
+    return predict_year_infra(prediction.instances, prediction.infra_multiplier)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
