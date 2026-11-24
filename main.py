@@ -6,7 +6,7 @@ from predict import suggest_scale, predict_year, predict_infra, predict_year_inf
 
 class Prediction(BaseModel):
     cpu: int
-    ram: int
+    ram: float
     monthly_cost: float
     infra_multiplier: float
     scale_type: str
@@ -14,14 +14,14 @@ class Prediction(BaseModel):
 class YearPrediction(BaseModel):
     mac: str
     cpu: int
-    ram: int
+    ram: float
     monthly_cost: float
     infra_multiplier: list[float]
     
 class Instance(BaseModel):
     mac: str
     cpu: int
-    ram: int
+    ram: float
     monthly_cost: float
     
 class InfraPrediction(BaseModel):
