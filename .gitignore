@@ -2,3 +2,4 @@ __pycache__
 .venv
 .env
 ec2_prices_us-east-1.json
+microhub_historical.json
