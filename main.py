@@ -1,4 +1,6 @@
-import uvicorn
+import uvicorn, json
+from redis import Redis
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -39,7 +41,13 @@ class Infra(BaseModel):
     cpus: int
     ram: float
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.redis = Redis(host="localhost", port=6379, decode_responses=True)
+    yield
+    app.state.redis.close()
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -66,7 +74,15 @@ def predict_year_infra_endpoint(prediction: InfraYearPrediction):
 
 @app.post("/infra-analysis-year/")
 def infra_analysis_year_endpoint(infra: Infra):
-    return infra_analysis_year(infra.company)
+    key = f"infra_analysis_year:{infra.company}"
+    cached = app.state.redis.get(key)
+    
+    if cached is not None:
+        return json.loads(cached)
+    
+    response = infra_analysis_year(infra.company)
+    app.state.redis.set(key, json.dumps(response), ex=3600)
+    return response
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
