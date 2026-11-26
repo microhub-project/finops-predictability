@@ -27,6 +27,8 @@ A API de predição roda na porta `:8000`, que é a porta padrão do **framework
 
 Após clonar o repositório, siga os passos abaixo para utilizar o sistema:
 
+**Pré-requisito:** é necessário possuir o `Redis` instalado em sua máquina. Caso não possua, siga o guia de instalação para o seu sistema operacional na [documentação oficial do Redis](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/).
+
 1. Crie um **virtual environment** (`.venv`) Python na sua IDE utilizando a versão `3.14`;
 2. Execute o comando abaixo para instalar todas as dependências do projeto;
     ```
